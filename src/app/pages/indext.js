@@ -1,10 +1,8 @@
-"use client";
-
 import { useState, useRef } from "react";
-import { Roulette } from "../app/lib/roulette";
-import { MartingaleStrategy } from "../app/lib/martingaleStrategy";
-import { Statistics } from "../app/lib/statistics";
-import "./globals.css"; // Using global CSS
+import { Roulette } from "../lib/roulette";
+import { MartingaleStrategy } from "../lib/martingaleStrategy";
+import { Statistics } from "../lib/statistics";
+import styles from "../styles/Home.module.css";
 
 export default function Home() {
   const [initialBet, setInitialBet] = useState(10);
@@ -34,8 +32,8 @@ export default function Home() {
     const capital = calculateCapital(initialBet, maxLevels);
     const roulette = new Roulette();
     const strategy = new MartingaleStrategy({
-      initial_bet: initialBet,
-      max_levels: maxLevels,
+      initialBet,
+      maxLevels,
       capital,
     });
 
@@ -110,11 +108,11 @@ export default function Home() {
   };
 
   return (
-    <div className="container">
+    <div className={styles.container}>
       <h1>Martingale Strategy Simulator</h1>
 
-      <div className="controls">
-        <div className="control-group">
+      <div className={styles.controls}>
+        <div className={styles.controlGroup}>
           <label>
             Initial Bet:
             <input
@@ -122,12 +120,11 @@ export default function Home() {
               value={initialBet}
               onChange={(e) => setInitialBet(Number(e.target.value))}
               disabled={isRunning}
-              min="1"
             />
           </label>
         </div>
 
-        <div className="control-group">
+        <div className={styles.controlGroup}>
           <label>
             Max Levels:
             <input
@@ -135,12 +132,11 @@ export default function Home() {
               value={maxLevels}
               onChange={(e) => setMaxLevels(Number(e.target.value))}
               disabled={isRunning}
-              min="1"
             />
           </label>
         </div>
 
-        <div className="control-group">
+        <div className={styles.controlGroup}>
           <label>
             Profit Goal:
             <input
@@ -148,12 +144,11 @@ export default function Home() {
               value={profitGoal}
               onChange={(e) => setProfitGoal(Number(e.target.value))}
               disabled={isRunning}
-              min="1"
             />
           </label>
         </div>
 
-        <div className="control-group">
+        <div className={styles.controlGroup}>
           <label>
             Show Messages:
             <input
@@ -170,21 +165,23 @@ export default function Home() {
         </button>
       </div>
 
-      <div className="status">{currentStatus}</div>
+      <div className={styles.status}>{currentStatus}</div>
 
       {history.length > 0 && (
-        <div className="history">
+        <div className={styles.history}>
           <h3>Bet History</h3>
-          <div className="history-list">
+          <div className={styles.historyList}>
             {history.map((item, index) => (
-              <div key={index} className="history-item">
+              <div key={index} className={styles.historyItem}>
                 {item.type === "bet" ? (
                   <p>
                     #{item.iteration}: Bet R{item.betAmount} (Profit: R
                     {item.currentProfit})
                   </p>
                 ) : (
-                  <p className={item.result === "WIN" ? "win" : "loss"}>
+                  <p
+                    className={item.result === "WIN" ? styles.win : styles.loss}
+                  >
                     #{item.iteration}: {item.result}! New profit: R{item.profit}
                   </p>
                 )}
@@ -195,9 +192,9 @@ export default function Home() {
       )}
 
       {results && (
-        <div className="results">
+        <div className={styles.results}>
           <h2>Simulation Results</h2>
-          <div className="result-grid">
+          <div className={styles.resultGrid}>
             <div>
               <h3>Summary</h3>
               <p>Total spins: {results.total_spins}</p>
