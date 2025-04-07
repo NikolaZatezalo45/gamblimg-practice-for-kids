@@ -1,21 +1,40 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Roulette } from "../app/lib/roulette";
 import { MartingaleStrategy } from "../app/lib/martingaleStrategy";
-import { Statistics } from "../app/lib/statistics";
-import "./globals.css"; // Using global CSS
+import "./globals.css";
 
 export default function Home() {
+  // Game settings
   const [initialBet, setInitialBet] = useState(10);
   const [maxLevels, setMaxLevels] = useState(5);
   const [profitGoal, setProfitGoal] = useState(100);
+  const [showMessages, setShowMessages] = useState(true);
+
+  // Game state
   const [isRunning, setIsRunning] = useState(false);
   const [results, setResults] = useState(null);
   const [history, setHistory] = useState([]);
-  const [showMessages, setShowMessages] = useState(true);
   const [currentStatus, setCurrentStatus] = useState("");
-  const simulatorRef = useRef(null);
+  const [wallet, setWallet] = useState(1000); // Starting with R1000
+  const [sessionProfit, setSessionProfit] = useState(0);
+
+  // Refs for auto-scrolling
+  const historyEndRef = useRef(null);
+  const resultsRef = useRef(null);
+
+  // Auto-scroll to bottom when history updates
+  useEffect(() => {
+    historyEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [history]);
+
+  // Auto-scroll to results when simulation ends
+  useEffect(() => {
+    if (results) {
+      resultsRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [results]);
 
   const calculateCapital = (bet, levels) => {
     let capital = 0;
@@ -25,7 +44,17 @@ export default function Home() {
     return capital;
   };
 
+  const resetGame = () => {
+    setIsRunning(false);
+    setResults(null);
+    setHistory([]);
+    setCurrentStatus("Ready for new simulation");
+    setSessionProfit(0);
+  };
+
   const startSimulation = () => {
+    if (isRunning) return;
+
     setIsRunning(true);
     setResults(null);
     setHistory([]);
@@ -47,7 +76,20 @@ export default function Home() {
         strategy.statistics.capital_lost ||
         strategy.statistics.total_amount_won >= profitGoal
       ) {
-        finishSimulation(strategy, iteration);
+        const finalStats = strategy.statistics.summary();
+        setResults(finalStats);
+        setIsRunning(false);
+
+        // Update wallet and session profit
+        const profit = finalStats.net_profit;
+        setSessionProfit((prev) => prev + profit);
+        setWallet((prev) => prev + profit);
+
+        setCurrentStatus(
+          strategy.statistics.capital_lost
+            ? `Lost capital after ${iteration} iterations!`
+            : `Completed ${iteration} iterations`
+        );
         return;
       }
 
@@ -99,63 +141,62 @@ export default function Home() {
     runIteration();
   };
 
-  const finishSimulation = (strategy, iterations) => {
-    setResults(strategy.statistics.summary());
-    setIsRunning(false);
-    setCurrentStatus(
-      strategy.statistics.capital_lost
-        ? `Lost capital after ${iterations} iterations!`
-        : `Completed ${iterations} iterations`
-    );
-  };
-
   return (
     <div className="container">
       <h1>Martingale Strategy Simulator</h1>
 
+      {/* Wallet and Session Tracking */}
+      <div className="wallet-info">
+        <div className="wallet-item">
+          <h3>Current Wallet</h3>
+          <p className={wallet >= 1000 ? "win" : "loss"}>R{wallet}</p>
+        </div>
+        <div className="wallet-item">
+          <h3>Session Profit</h3>
+          <p className={sessionProfit >= 0 ? "win" : "loss"}>
+            R{sessionProfit}
+          </p>
+        </div>
+      </div>
+
+      {/* Controls Section */}
       <div className="controls">
         <div className="control-group">
-          <label>
-            Initial Bet:
-            <input
-              type="number"
-              value={initialBet}
-              onChange={(e) => setInitialBet(Number(e.target.value))}
-              disabled={isRunning}
-              min="1"
-            />
-          </label>
+          <label>Initial Bet</label>
+          <input
+            type="number"
+            value={initialBet}
+            onChange={(e) => setInitialBet(Number(e.target.value))}
+            disabled={isRunning}
+            min="1"
+          />
         </div>
 
         <div className="control-group">
-          <label>
-            Max Levels:
-            <input
-              type="number"
-              value={maxLevels}
-              onChange={(e) => setMaxLevels(Number(e.target.value))}
-              disabled={isRunning}
-              min="1"
-            />
-          </label>
+          <label>Max Levels</label>
+          <input
+            type="number"
+            value={maxLevels}
+            onChange={(e) => setMaxLevels(Number(e.target.value))}
+            disabled={isRunning}
+            min="1"
+          />
         </div>
 
         <div className="control-group">
-          <label>
-            Profit Goal:
-            <input
-              type="number"
-              value={profitGoal}
-              onChange={(e) => setProfitGoal(Number(e.target.value))}
-              disabled={isRunning}
-              min="1"
-            />
-          </label>
+          <label>Profit Goal</label>
+          <input
+            type="number"
+            value={profitGoal}
+            onChange={(e) => setProfitGoal(Number(e.target.value))}
+            disabled={isRunning}
+            min="1"
+          />
         </div>
 
-        <div className="control-group">
+        <div className="control-group checkbox-group">
           <label>
-            Show Messages:
+            Show Messages
             <input
               type="checkbox"
               checked={showMessages}
@@ -165,13 +206,23 @@ export default function Home() {
           </label>
         </div>
 
-        <button onClick={startSimulation} disabled={isRunning}>
-          Start Simulation
-        </button>
+        <div className="button-group">
+          <button
+            onClick={startSimulation}
+            disabled={isRunning}
+            className="start-button"
+          >
+            Start Simulation
+          </button>
+          <button onClick={resetGame} className="reset-button">
+            Reset Session
+          </button>
+        </div>
       </div>
 
       <div className="status">{currentStatus}</div>
 
+      {/* History Section with Auto-scroll */}
       {history.length > 0 && (
         <div className="history">
           <h3>Bet History</h3>
@@ -190,12 +241,14 @@ export default function Home() {
                 )}
               </div>
             ))}
+            <div ref={historyEndRef} />
           </div>
         </div>
       )}
 
+      {/* Results Section with Auto-scroll */}
       {results && (
-        <div className="results">
+        <div className="results" ref={resultsRef}>
           <h2>Simulation Results</h2>
           <div className="result-grid">
             <div>
