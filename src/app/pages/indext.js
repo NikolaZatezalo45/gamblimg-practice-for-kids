@@ -1,8 +1,8 @@
+"use client";
+
 import { useState, useRef } from "react";
-import { Roulette } from "../lib/roulette";
-import { MartingaleStrategy } from "../lib/martingaleStrategy";
-import { Statistics } from "../lib/statistics";
-import styles from "../styles/Home.module.css";
+import { Roulette } from "../app/lib/roulette";
+import { MartingaleStrategy } from "../app/lib/martingaleStrategy";
 
 export default function Home() {
   const [initialBet, setInitialBet] = useState(10);
@@ -32,8 +32,8 @@ export default function Home() {
     const capital = calculateCapital(initialBet, maxLevels);
     const roulette = new Roulette();
     const strategy = new MartingaleStrategy({
-      initialBet,
-      maxLevels,
+      initial_bet: initialBet,
+      max_levels: maxLevels,
       capital,
     });
 
@@ -108,11 +108,11 @@ export default function Home() {
   };
 
   return (
-    <div className={styles.container}>
+    <div className="container">
       <h1>Martingale Strategy Simulator</h1>
 
-      <div className={styles.controls}>
-        <div className={styles.controlGroup}>
+      <div className="controls">
+        <div className="control-group">
           <label>
             Initial Bet:
             <input
@@ -120,11 +120,12 @@ export default function Home() {
               value={initialBet}
               onChange={(e) => setInitialBet(Number(e.target.value))}
               disabled={isRunning}
+              min="1"
             />
           </label>
         </div>
 
-        <div className={styles.controlGroup}>
+        <div className="control-group">
           <label>
             Max Levels:
             <input
@@ -132,11 +133,12 @@ export default function Home() {
               value={maxLevels}
               onChange={(e) => setMaxLevels(Number(e.target.value))}
               disabled={isRunning}
+              min="1"
             />
           </label>
         </div>
 
-        <div className={styles.controlGroup}>
+        <div className="control-group">
           <label>
             Profit Goal:
             <input
@@ -144,11 +146,12 @@ export default function Home() {
               value={profitGoal}
               onChange={(e) => setProfitGoal(Number(e.target.value))}
               disabled={isRunning}
+              min="1"
             />
           </label>
         </div>
 
-        <div className={styles.controlGroup}>
+        <div className="control-group">
           <label>
             Show Messages:
             <input
@@ -165,23 +168,21 @@ export default function Home() {
         </button>
       </div>
 
-      <div className={styles.status}>{currentStatus}</div>
+      <div className="status">{currentStatus}</div>
 
       {history.length > 0 && (
-        <div className={styles.history}>
+        <div className="history">
           <h3>Bet History</h3>
-          <div className={styles.historyList}>
+          <div className="history-list">
             {history.map((item, index) => (
-              <div key={index} className={styles.historyItem}>
+              <div key={index} className="history-item">
                 {item.type === "bet" ? (
                   <p>
                     #{item.iteration}: Bet R{item.betAmount} (Profit: R
                     {item.currentProfit})
                   </p>
                 ) : (
-                  <p
-                    className={item.result === "WIN" ? styles.win : styles.loss}
-                  >
+                  <p className={item.result === "WIN" ? "win" : "loss"}>
                     #{item.iteration}: {item.result}! New profit: R{item.profit}
                   </p>
                 )}
@@ -192,9 +193,9 @@ export default function Home() {
       )}
 
       {results && (
-        <div className={styles.results}>
+        <div className="results">
           <h2>Simulation Results</h2>
-          <div className={styles.resultGrid}>
+          <div className="result-grid">
             <div>
               <h3>Summary</h3>
               <p>Total spins: {results.total_spins}</p>
